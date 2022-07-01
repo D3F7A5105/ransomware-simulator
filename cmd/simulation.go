@@ -29,7 +29,7 @@ var runOptions = struct {
 
 	DisableShadowCopyDeletion bool `flag:"disable-shadow-copy-deletion" description:"Don't simulate volume shadow copy deletion"`
 
-	DisableAddRegistryAutoRun bool `flag:"disable-registry-autorun" description:"Do not add a value to the registry startup"`
+	EnableAddRegistryAutoRun bool `flag:"enable-registry-autorun" description:"Add a value to the registry startup and after reboot execute ransomware functional"`
 
 	DisableFileEncryption bool   `flag:"disable-file-encryption" description:"Don't simulate document encryption"`
 	EncryptionDirectory   string `flag:"dir" description:"Directory where files that will be encrypted should be staged"`
@@ -44,24 +44,24 @@ var runOptions = struct {
 var homeDir, _ = os.UserHomeDir()
 
 func run(cmd *cobra.Command, args []string) {
-	if !runOptions.DisableMacroSimulation {
-		// Simulate Macro execution of this executable with current parameters, including --disable-macro-simulation
+	if runOptions.EnableAddRegistryAutoRun {
+		if err := persistance.RegistryAutoRun(); err != nil {
+			log.Fatal(err)
+		}
+	}
+	// Simulate Macro execution of this executable with current parameters, including --disable-macro-simulation
+	if !runOptions.DisableMacroSimulation && !runOptions.EnableAddRegistryAutoRun {
 		if err := simulatemacro.Run(append(os.Args, "--disable-macro-simulation")); err != nil {
 			log.Fatal(err)
 		}
 	}
 	fmt.Println(asciiArt)
-	if !runOptions.DisableShadowCopyDeletion {
+	if !runOptions.DisableShadowCopyDeletion && !runOptions.EnableAddRegistryAutoRun {
 		if err := shadowcopy.Delete(); err != nil {
 			log.Fatal(err)
 		}
 	}
-	if !runOptions.DisableAddRegistryAutoRun {
-		if err := persistance.RegistryAutoRun(); err != nil {
-			log.Fatal(err)
-		}
-	}
-	if !runOptions.DisableFileEncryption {
+	if !runOptions.DisableFileEncryption && !runOptions.EnableAddRegistryAutoRun {
 		if err := encrypt.StageFiles(runOptions.EncryptionDirectory); err != nil {
 			log.Fatal(err)
 		}
@@ -69,7 +69,7 @@ func run(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 	}
-	if !runOptions.DisableNoteDrop {
+	if !runOptions.DisableNoteDrop && !runOptions.EnableAddRegistryAutoRun {
 		if err := note.Write(runOptions.NoteLocation); err != nil {
 			log.Fatal(err)
 		}

